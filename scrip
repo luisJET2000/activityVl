@@ -1,0 +1,93 @@
+#include <port.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+#define SCREEN_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+#define BUTTON_PIN 16
+#define MODO_MAX 5
+volatile int modo = 0;
+volatile int contador = 0;
+
+void IRAM_ATTR botonInterrupt() {
+    modo++;
+    if (modo > MODO_MAX) {
+        modo = 0;
+        contador = 0;
+    }
+}
+
+void setup() {
+    pinMode(BUTTON_PIN, INPUT_PULLDOWN);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), botonInterrupt, RISING);
+
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+        Serial.println(F("SSD1306 allocation failed"));
+        for (;;);
+    }
+    display.display();
+    delay(2000); // Pause for 2 seconds
+}
+
+void loop() {
+    display.clearDisplay();
+
+    switch (modo) {
+    case 0:
+        display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0, 0);
+        display.println("Luis Josue");
+        display.setCursor(0, 16);
+        display.println("Esteban Trinidad");
+        display.setCursor(30, 32);
+        display.println("JET");
+        break;
+
+    case 1:
+        display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0, 0);
+        display.println("Variables");
+        display.setCursor(10, 32);
+        display.println("Contando:");
+        display.setCursor(90, 32);
+        display.println(contador);
+        display.display();
+        delay(1000);
+        contador++;
+        break;
+
+    case 2:
+        for (int i = 0; i < 64; i += 8) {
+            display.drawFastHLine(0, i, 128, SSD1306_WHITE);
+        }
+        break;
+
+    case 3:
+        for (int i = 0; i < 128; i += 8) {
+            display.drawFastVLine(i, 0, 64, SSD1306_WHITE);
+        }
+        break;
+
+    case 4:
+        display.drawRect(10, 10, 40, 20, SSD1306_WHITE);
+        display.drawRect(60, 30, 50, 20, SSD1306_WHITE);
+        break;
+
+    case 5:
+        display.fillRect(10, 10, 40, 20, SSD1306_WHITE);
+        display.fillRect(60, 30, 50, 20, SSD1306_WHITE);
+        display.fillRect(62, 32, 20, 10, SSD1306_BLACK);
+        display.fillRect(87, 38, 20, 10, SSD1306_BLACK);
+        break;
+    }
+
+    display.display();
+}
